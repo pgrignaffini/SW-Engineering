@@ -1,0 +1,79 @@
+# 1 "monkey.prom"
+# 1 "<built-in>" 1
+# 1 "<built-in>" 3
+# 361 "<built-in>" 3
+# 1 "<command line>" 1
+# 1 "<built-in>" 2
+# 1 "monkey.prom" 2
+
+
+
+
+mtype = { EAST, WEST };
+mtype = { EMPTY, EAST2WEST, WEST2EAST };
+
+mtype rope = EMPTY;
+int numberOnRope = 0;
+mtype traveling[4];
+
+proctype monkey(int id; mtype initSide)
+{
+   mtype side = initSide;
+   int timer = 0;
+   traveling[id] = EMPTY;
+   printf("I am monkey %d on side %e\n",id,side);
+   do
+   :: atomic {
+       (traveling[id] == EMPTY && (
+       rope == EMPTY ||
+       (side==EAST && rope==EAST2WEST && numberOnRope < 3) ||
+       (side==WEST && rope==WEST2EAST && numberOnRope < 3))) ->
+      numberOnRope++;
+      printf("%d: Moving to other side...\n",id);
+      if
+      :: (rope==EMPTY && side==EAST) -> rope = EAST2WEST;
+      :: (rope==EMPTY && side==WEST) -> rope = WEST2EAST;
+      :: else -> skip;
+      fi
+      traveling[id] = rope;
+      timer = 0;
+      }
+   :: (traveling[id] != EMPTY && timer < 5) ->
+      printf("%d: Crossing...\n",id);
+      timer++;
+   :: atomic {
+      (traveling[id] != EMPTY) ->
+      numberOnRope--;
+      printf("%d: Reached other side\n",id);
+      if
+      :: (side==EAST) -> side = WEST;
+      :: (side==WEST) -> side = EAST;
+      fi
+      if
+      :: (numberOnRope <= 0) -> rope = EMPTY;
+      :: else -> skip;
+      fi
+      traveling[id] = EMPTY;
+      timer = 0;
+      }
+   :: (traveling[id] == EMPTY && timer < 10) ->
+      printf("%d: Staying on this side...\n",id);
+      timer++;
+   od
+}
+
+
+init
+{
+   int i;
+   i = 0;
+   do
+   :: (i < 4) -> run monkey(i,EAST); i++;
+   :: (i < 4) -> run monkey(i,WEST); i++;
+   :: else -> break;
+   od
+}
+
+ltl SafetyMaxOnRope { [] ! (numberOnRope > 3) }
+ltl SafetyDirOnRope { [] ! (traveling[1] == EAST2WEST && traveling[2] == WEST2EAST) }
+ltl LivenessCanCross { [] <> (traveling[1] == EAST2WEST) }

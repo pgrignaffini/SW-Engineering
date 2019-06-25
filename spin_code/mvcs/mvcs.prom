@@ -1,0 +1,205 @@
+#define SIZE 5
+#define VMAX 2
+#define VMIN -2
+#define SEQSIZE (SIZE * SIZE) //over-estimation, need to make sure that the array doesn't overflow
+
+int vals[SIZE];
+int maxSum[SIZE];
+int allSeqSums[SEQSIZE];
+bool sequence[SIZE];
+int max;
+int start = 0;
+int end = 0;
+
+inline genValue(i)
+{
+  int v;
+  do
+    :: (v < VMAX) -> v++;
+    :: (v > VMIN) -> v--;
+    :: true -> break;
+  od
+
+  vals[i] = v;
+}
+
+inline initArray()
+{
+  int i;
+  i = 0;
+
+  do
+    :: (i < SIZE) -> genValue(i); i++;
+    :: else -> break;
+  od
+
+}
+
+inline initSeqSums()
+{
+  int i = 0;
+
+  do
+    :: (i < SEQSIZE) -> allSeqSums[i] = VMIN; i++;
+    :: else -> break;
+  od
+}
+
+inline printArray()
+{
+  int i;
+  i = 0;
+
+  printf("Array:\n");
+
+  do
+    :: (i < SIZE) ->
+        printf("vals[%d] = %d\n", i, vals[i]);
+        i++;
+    :: else -> break;
+  od
+
+}
+
+inline printMaxSeq()
+{
+  int i = start;
+
+  printf("Max sequence: [");
+
+  do
+    :: (i <= end) ->
+        printf("%d ", vals[i]);
+        i++;
+    :: else -> break;
+  od
+
+  printf("]\n");
+
+}
+
+inline printAllSums()
+{
+  int i;
+  i = 0;
+
+  printf("Sums in subsequences:\n")
+
+  do
+    :: (i < SEQSIZE) ->
+        printf("allSeqSums[%d] = %d\n", i, allSeqSums[i]);
+        i++;
+    :: else -> break;
+  od
+}
+
+//Kadane's algorithm
+inline findMaxSumsDyn()
+{
+  int curr_max = vals[0];
+  int max_here = curr_max;
+  int i = 1;
+  int s = 0;
+
+  do
+  :: (i < SIZE) ->
+      max_here = max_here + vals[i];
+      if
+      :: (max_here < vals[i]) ->
+          max_here = vals[i];
+          s = i;
+      :: else -> skip;
+      fi
+      if
+      :: (curr_max < max_here) ->
+         curr_max = max_here;
+         start = s;
+         end = i;
+      :: else -> skip;
+      fi
+      i++;
+  :: else -> break;
+  od
+
+  max = curr_max;
+}
+
+//verifies the correctness by comparing each possible subsequence sum with the proposed max
+inline verifyMaxSum()
+{
+  int i;
+  i = 0;
+
+  do
+    :: (i < SEQSIZE) -> assert(max >= allSeqSums[i]);
+        i++;
+    :: else -> break;
+  od
+}
+
+//verifies the correctness by using the indices calculated for the max-subarray and comparing the result obtained by
+//summing each element belonging to the indices interval with the proposed max
+inline verifyMaxSeq()
+{
+  int i = start;
+  int sum = 0;
+
+  do
+  :: (i <= end) ->
+     sum = sum + vals[i]
+     i++;
+  :: else -> break;
+  od
+  assert(sum == max);
+}
+
+inline findSumSeqs()
+{
+  int i = 0;
+  int j;
+  int k;
+  int index = 0;
+  int sum = 0;
+
+//printf("Contiguous subsequences: \n");
+
+  do
+  :: (i < SIZE) ->
+     j = i;
+     do
+     :: (j < SIZE) ->
+        k = i;
+        do
+        :: (k <= j) ->
+         //printf("%d ", vals[k]);
+           sum = sum + vals[k];
+           k++;
+        :: else -> break;
+        od
+        //printf("\n");
+        allSeqSums[index] = sum;
+        sum = 0;
+        index++;
+        j++;
+      :: else -> break;
+      od
+      i++;
+    :: else -> break;
+    od
+}
+
+init
+{
+  initArray();
+  initSeqSums();
+  printArray();
+  findSumSeqs();
+  //printAllSums();
+  findMaxSumsDyn();
+  verifyMaxSum();
+  printf("Max sum is: %d\n", max);
+  //printf("Start: %d\n", start);
+  //printf("End: %d\n", end);
+  printMaxSeq();
+  verifyMaxSeq();
+}

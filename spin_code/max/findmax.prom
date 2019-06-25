@@ -1,0 +1,83 @@
+#define SIZE 5
+#define VMAX 15
+
+byte vals[SIZE];
+byte max;
+
+inline genValue(i)
+{
+  byte v;
+  do
+    :: (v < VMAX) -> v++;
+    :: true -> break;
+  od
+
+  vals[i] = v;
+}
+
+//macro
+inline initArray()
+{
+  byte i;
+  i = 0;
+
+  do //non-deterministic
+    :: (i < SIZE) -> genValue(i); i++;
+    :: (i >= SIZE) -> break;
+  od
+
+}
+
+
+inline printArray()
+{
+  byte i;
+  i = 0;
+
+  do //non-deterministic
+    :: (i < SIZE) -> printf("vals[%d] = %d\n", i, vals[i]);
+                     i++;
+    :: (i >= SIZE) -> break;
+  od
+
+}
+
+inline findMax()
+{
+  byte i;
+  i = 0;
+  max = 0;
+
+  do //non-deterministic
+    :: (i < SIZE) ->
+        if
+          :: (vals[i] > max) -> max = vals[i]; //if no guards of the if is true, then the process waits
+          :: else -> skip;
+        fi
+        i++;
+    :: else -> break;
+  od
+
+}
+
+inline verifyMax()
+{
+  byte i;
+  i = 0;
+
+  do //non-deterministic
+    :: (i < SIZE) ->
+        assert(vals[i] <= max);
+        i++;
+    :: (i >= SIZE) -> break;
+  od
+}
+
+init
+{
+  initArray();
+  printArray();
+  findMax();
+  verifyMax();
+  printf("max is: %d\n", max);
+}

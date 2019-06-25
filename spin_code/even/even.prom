@@ -1,0 +1,22 @@
+proctype evenOutput(byte v)
+{
+  if
+    :: (v%2 != 0) -> v = v-1;
+    :: else -> skip;
+  fi
+
+  assert((v%2)==0);
+  printf("output: %d\n", v);
+}
+
+init
+{
+  byte x;
+  x = 0;
+  do
+    :: (x < 255) -> x++;
+    :: true -> break;
+  od
+
+  run evenOutput(x);
+}
